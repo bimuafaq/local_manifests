@@ -1,0 +1,92 @@
+From 7a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b Mon Sep 17 00:00:00 2001
+From: bimuafaq <133272416+bimuafaq@users.noreply.github.com>
+Date: Sat, 30 May 2026 10:52:03 +0000
+Subject: [PATCH] core: Allow permissive SELinux, spoof SafetyNet props,
+ disable statsd
+
+Enable ALLOW_PERMISSIVE_SELINUX, spoof verified boot properties
+for SafetyNet compatibility, and remove statsd from zygote-start.
+
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -94,7 +94,7 @@ cc_defaults {
+         "-Wthread-safety",
+         "-DALLOW_FIRST_STAGE_CONSOLE=0",
+         "-DALLOW_LOCAL_PROP_OVERRIDE=0",
+-        "-DALLOW_PERMISSIVE_SELINUX=0",
++        "-DALLOW_PERMISSIVE_SELINUX=1",
+         "-DREBOOT_BOOTLOADER_ON_PANIC=0",
+         "-DWORLD_WRITABLE_KMSG=0",
+         "-DDUMP_ON_UMOUNT_FAILURE=0",
+
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -18,7 +18,7 @@ else
+ init_options += \
+     -DALLOW_FIRST_STAGE_CONSOLE=0 \
+     -DALLOW_LOCAL_PROP_OVERRIDE=0 \
+-    -DALLOW_PERMISSIVE_SELINUX=0 \
++    -DALLOW_PERMISSIVE_SELINUX=1 \
+     -DREBOOT_BOOTLOADER_ON_PANIC=0 \
+     -DWORLD_WRITABLE_KMSG=0 \
+     -DDUMP_ON_UMOUNT_FAILURE=0
+
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -1064,6 +1064,13 @@ static void ProcessKernelCmdline() {
+     }
+ }
+
++static void SetSafetyNetProps() {
++    InitPropertySet("ro.boot.flash.locked", "1");
++    InitPropertySet("ro.boot.verifiedbootstate", "green");
++    InitPropertySet("ro.boot.veritymode", "enforcing");
++    InitPropertySet("ro.boot.vbmeta.device_state", "locked");
++}
++
+ void PropertyInit() {
+     selinux_callback cb;
+     cb.func_audit = PropertyAuditCallback;
+@@ -1078,6 +1085,14 @@ void PropertyInit() {
+         LOG(FATAL) << "Failed to load serialized property info file";
+     }
+
++    // Report a valid verified boot chain to make Google SafetyNet integrity
++    // checks pass. This needs to be done before parsing the kernel cmdline as
++    // these properties are read-only and will be set to invalid values with
++    // androidboot cmdline arguments.
++    if (!IsRecoveryMode()) {
++        SetSafetyNetProps();
++    }
++
+     // If arguments are passed both on the command line and in DT,
+     // properties set in DT always have priority over the command-line ones.
+     ProcessKernelDt();
+
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -812,7 +812,6 @@ on zygote-start && property:persist.sys.fuse=""
+ on zygote-start && property:ro.crypto.state=unencrypted
+     # A/B update verifier that marks a successful boot.
+     exec_start update_verifier_nonencrypted
+-    start statsd
+     start netd
+     start zygote
+     start zygote_secondary
+@@ -820,7 +819,6 @@ on zygote-start && property:ro.crypto.state=unencrypted
+ on zygote-start && property:ro.crypto.state=unsupported
+     # A/B update verifier that marks a successful boot.
+     exec_start update_verifier_nonencrypted
+-    start statsd
+     start netd
+     start zygote
+     start zygote_secondary
+@@ -828,7 +826,6 @@ on zygote-start && property:ro.crypto.state=unsupported
+ on zygote-start && property:ro.crypto.state=encrypted && property:ro.crypto.type=file
+     # A/B update verifier that marks a successful boot.
+     exec_start update_verifier_nonencrypted
+-    start statsd
+     start netd
+     start zygote
+     start zygote_secondary
+

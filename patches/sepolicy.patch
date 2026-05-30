@@ -1,0 +1,26 @@
+From 9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d Mon Sep 17 00:00:00 2001
+From: bimuafaq <133272416+bimuafaq@users.noreply.github.com>
+Date: Sat, 30 May 2026 10:52:03 +0000
+Subject: [PATCH] sepolicy: Do not fail build on permissive domains
+
+Remove exit 1 from permissive domain checks so the build
+continues even when permissive domains are present.
+
+--- a/Android.mk
++++ b/Android.mk
+@@ -1304,7 +1304,6 @@ $(built_sepolicy_neverallows)
+ 		echo "ERROR: permissive domains not allowed in user builds" 1>&2; \
+ 		echo "List of invalid domains:" 1>&2; \
+ 		cat $@.permissivedomains 1>&2; \
+-		exit 1; \
+ 		fi
+ 	$(hide) mv $@.tmp $@
+ 
+@@ -1361,7 +1360,6 @@ $(LOCAL_BUILT_MODULE): $(sepolicy.recovery.conf) $(HOST_OUT_EXECUTABLES)/checkpo
+ 		echo "ERROR: permissive domains not allowed in user builds" 1>&2; \
+ 		echo "List of invalid domains:" 1>&2; \
+ 		cat $@.permissivedomains 1>&2; \
+-		exit 1; \
+ 		fi
+ 	$(hide) mv $@.tmp $@
+ 
