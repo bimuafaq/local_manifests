@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+
+  <!-- Device and Vendor trees -->
+  <project path="device/realme/RMX2185" name="bimuafaq/device_realme_RMX2185" remote="github" revision="lineage-18.1" />
+  <project path="vendor/realme/RMX2185" name="bimuafaq/vendor_realme_RMX2185" remote="github" revision="lineage-18.1" />
+  <project path="kernel/realme/RMX2185" name="bimuafaq/kernel_realme_RMX2185" remote="github" revision="lineage-17.1" />
+
+  <!-- Remove -->
+  <remove-project name="device/google/cuttlefish" />
+  <remove-project name="device/google/cuttlefish_kernel" />
+  <remove-project name="LineageOS/android_device_generic_goldfish" />
+  <remove-project name="LineageOS/android_device_generic_goldfish-opengl" />
+  <remove-project name="LineageOS/android_external_ant-wireless_ant_native" />
+  <remove-project name="LineageOS/android_external_ant-wireless_ant_service" />
+  <remove-project name="LineageOS/android_external_bash" />
+  <remove-project name="LineageOS/android_external_htop" />
+  <remove-project name="LineageOS/android_external_libncurses" />
+  <remove-project name="LineageOS/android_external_nano" />
+  <remove-project name="LineageOS/android_external_openssh" />
+  <remove-project name="LineageOS/android_external_p7zip" />
+  <remove-project name="LineageOS/android_external_rsync" />
+  <remove-project name="LineageOS/android_external_unrar" />
+  <remove-project name="LineageOS/android_external_vim" />
+  <remove-project name="LineageOS/android_packages_apps_Eleven" />
+  <remove-project name="LineageOS/android_packages_providers_PartnerBookmarksProvider" />
+  <remove-project name="LineageOS/android_packages_screensavers_Basic" />
+  <remove-project name="LineageOS/android_packages_screensavers_PhotoTable" />
+  <remove-project name="platform/external/adhd" />
+  <remove-project name="platform/external/crosvm" />
+  <remove-project name="platform/external/iperf3" />
+  <remove-project name="platform/external/tcpdump" />
+  <remove-project name="platform/external/virglrenderer" />
+  <remove-project name="platform/external/wayland" />
+  <remove-project name="platform/external/wayland-protocols" />
+  <remove-project name="platform/packages/apps/SampleLocationAttribution" />
+  <remove-project name="platform/prebuilts/fuchsia_sdk" />
+
+  <!-- Switch to old WebView -->
+  <remove-project name="LineageOS/android_external_chromium-webview_patches" />
+  <remove-project name="LineageOS/android_external_chromium-webview_prebuilt_arm" />
+  <remove-project name="LineageOS/android_external_chromium-webview_prebuilt_arm64" />
+  <remove-project name="LineageOS/android_external_chromium-webview_prebuilt_x86" />
+  <remove-project name="LineageOS/android_external_chromium-webview_prebuilt_x86_64" />
+  <project path="external/chromium-webview" name="LineageOS/android_external_chromium-webview" remote="github" revision="master" />
+
+  <!-- Personal -->
+  <remove-project name="LineageOS/android_frameworks_base" />
+  <project path="frameworks/base" name="bimuafaq/android_frameworks_base" groups="pdk-cw-fs,pdk-fs" remote="github" revision="lineage-18.1" />
+  
+  <remove-project name="LineageOS/android_packages_apps_Settings" />
+  <project path="packages/apps/Settings" name="bimuafaq/android_packages_apps_Settings" groups="pdk-fs" remote="github" revision="lineage-18.1" />
+  
+  <remove-project name="LineageOS/android_packages_apps_Trebuchet" />
+  <project path="packages/apps/Trebuchet" name="bimuafaq/android_packages_apps_Trebuchet" remote="github" revision="lineage-18.1" />
+  
+  <remove-project name="LineageOS/android_lineage-sdk" />
+  <project path="lineage-sdk" name="bimuafaq/android_lineage-sdk" remote="github" revision="lineage-18.1" />
+  
+  <remove-project name="LineageOS/android_packages_apps_LineageParts" />
+  <project path="packages/apps/LineageParts" name="bimuafaq/android_packages_apps_LineageParts" remote="github" revision="lineage-18.1" />
+  
+  <remove-project name="LineageOS/android_packages_apps_DeskClock" />
+  <project path="packages/apps/DeskClock" name="rov-ext/android_packages_apps_DeskClock" remote="github" revision="exthm-11" />
+   
+  <remove-project name="LineageOS/android_vendor_lineage" />
+  <project path="vendor/lineage" name="bimuafaq/android_vendor_lineage" remote="github" revision="lineage-18.1" />
+  
+</manifest>
