@@ -85,6 +85,9 @@
   
   <remove-project name="LineageOS/android_packages_apps_DeskClock" />
   <project path="packages/apps/DeskClock" name="rov-ext/android_packages_apps_DeskClock" remote="github" revision="exthm-11" />
+
+  <remove-project name="LineageOS/android_packages_apps_FMRadio" />
+  <project path="packages/apps/FMRadio" name="bimuafaq/android_packages_apps_FMRadio" remote="github" revision="lineage-18.1" />
    
   <remove-project name="LineageOS/android_vendor_lineage" />
   <project path="vendor/lineage" name="bimuafaq/android_vendor_lineage" remote="github" revision="lineage-18.1" />
