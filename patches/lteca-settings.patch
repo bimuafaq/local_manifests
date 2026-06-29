@@ -1,6 +1,6 @@
-From da2921b705565a0308afb999c4dee638b2a36498 Mon Sep 17 00:00:00 2001
+From ec0d3bee0eaf00858912291f45474393b947ec3c Mon Sep 17 00:00:00 2001
 From: bimuafaq <133272416+bimuafaq@users.noreply.github.com>
-Date: Mon, 30 Mar 2026 12:22:31 +0000
+Date: Mon, 29 Jun 2026 01:31:04 +0000
 Subject: [PATCH] Introduce Force LTE_CA override on per subscription basis
  [3/3]
 
@@ -10,6 +10,7 @@ Patches required in:
 - packages/apps/settings [3/3]
 
 Co-authored-by: Arindam Bhattacharjee <abhattacharjee717@gmail.com>
+Change-Id: Iea03b567de6a3f1250b74c5173905eebbd6d784a
 Signed-off-by: bimuafaq <bimuafaq@duck.com>
 ---
  res/values/custom_strings.xml                 |  4 ++++
@@ -18,7 +19,7 @@ Signed-off-by: bimuafaq <bimuafaq@duck.com>
  3 files changed, 29 insertions(+)
 
 diff --git a/res/values/custom_strings.xml b/res/values/custom_strings.xml
-index 687559d..a142055 100644
+index 22ee0ae..017688a 100644
 --- a/res/values/custom_strings.xml
 +++ b/res/values/custom_strings.xml
 @@ -19,6 +19,10 @@
@@ -31,7 +32,7 @@ index 687559d..a142055 100644
 +
      <string name="gms_blocker_title">Bypass GMS Warnings</string>
      <string name="gms_blocker_summary">Bypasses the \"This app won\'t run unless you update...\" dialogs</string>
- </resources>
+ 
 diff --git a/res/xml/mobile_network_settings.xml b/res/xml/mobile_network_settings.xml
 index 75e1596..041182d 100644
 --- a/res/xml/mobile_network_settings.xml
@@ -94,5 +95,5 @@ index 528e5c7..cdfa141 100644
  
      private void onSubscriptionDetailChanged() {
 -- 
-2.52.0
+2.54.0
 
