@@ -30,6 +30,7 @@ frameworks/opt/telephony:lteca-telephony.patch
 packages/apps/Settings:lteca-settings.patch
 frameworks/av:appvolume-av.patch
 frameworks/base:appvolume-base.patch
+frameworks/base:appvolume-base-updown.patch
 lineage-sdk:appvolume-sdk.patch
 packages/apps/LineageParts:appvolume-lineageparts.patch
 EOF

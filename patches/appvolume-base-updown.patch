@@ -1,0 +1,46 @@
+From 122c9396f52ea0b8435d980e92193b22581bd59a Mon Sep 17 00:00:00 2001
+From: bimuafaq <133272416+bimuafaq@users.noreply.github.com>
+Date: Fri, 10 Jul 2026 14:12:27 +0000
+Subject: [PATCH] SystemUI: wire up/down buttons for app volume rows
+
+Change-Id: I2c15cb948f1684570ee3bc548f36c31a4ba8cbd4
+---
+ .../systemui/volume/VolumeDialogImpl.java     | 22 +++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java b/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
+index 272fc9f3..48ddcb8b 100644
+--- a/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
+@@ -517,6 +517,28 @@ public class VolumeDialogImpl implements VolumeDialog,
+         row.appMuted = data.isMuted();
+         row.slider.setProgress((int) (data.getVolume() * 100));
+ 
++        row.upButton = row.view.findViewById(R.id.volume_row_slider_up);
++        if (row.upButton != null) {
++            row.upButton.setOnClickListener(v -> {
++                rescheduleTimeoutH();
++                int progress = row.slider.getProgress();
++                int newProgress = Math.min(100, progress + 10);
++                row.slider.setProgress(newProgress);
++                mController.getAudioManager().setAppVolume(row.packageName, newProgress * 0.01f);
++            });
++        }
++
++        row.downButton = row.view.findViewById(R.id.volume_row_slider_down);
++        if (row.downButton != null) {
++            row.downButton.setOnClickListener(v -> {
++                rescheduleTimeoutH();
++                int progress = row.slider.getProgress();
++                int newProgress = Math.max(0, progress - 10);
++                row.slider.setProgress(newProgress);
++                mController.getAudioManager().setAppVolume(row.packageName, newProgress * 0.01f);
++            });
++        }
++
+         row.dndIcon = row.view.findViewById(R.id.dnd_icon);
+         row.dndIcon.setVisibility(View.GONE);
+ 
+-- 
+2.54.0
+
