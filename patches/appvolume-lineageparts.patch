@@ -1,4 +1,4 @@
-From 65077a6e45b1e6da3f395c3f2d944c250c714817 Mon Sep 17 00:00:00 2001
+From 919ab9eebdfd27a7d3ca50590fe28114e5a5df8e Mon Sep 17 00:00:00 2001
 From: bimuafaq <133272416+bimuafaq@users.noreply.github.com>
 Date: Fri, 10 Jul 2026 09:22:42 +0000
 Subject: [PATCH] LineageParts: add show app volume toggle
@@ -40,7 +40,7 @@ index 5234a96..6503105 100644
  
      <PreferenceCategory
 diff --git a/src/org/lineageos/lineageparts/input/ButtonSettings.java b/src/org/lineageos/lineageparts/input/ButtonSettings.java
-index 613e847..efd7953 100644
+index 613e847..b007b25 100644
 --- a/src/org/lineageos/lineageparts/input/ButtonSettings.java
 +++ b/src/org/lineageos/lineageparts/input/ButtonSettings.java
 @@ -86,6 +86,7 @@ public class ButtonSettings extends SettingsPreferenceFragment
@@ -64,8 +64,8 @@ index 613e847..efd7953 100644
                  mVolumePanelOnLeft.setChecked(volumePanelOnLeft);
              }
 +
-+            final boolean showAppVolume = LineageSettings.System.getIntForUser(
-+                    getContentResolver(), LineageSettings.System.SHOW_APP_VOLUME, 0,
++            final boolean showAppVolume = LineageSettings.Secure.getIntForUser(
++                    getContentResolver(), LineageSettings.Secure.SHOW_APP_VOLUME, 0,
 +                    UserHandle.USER_CURRENT) != 0;
 +            mShowAppVolume = prefScreen.findPreference(KEY_SHOW_APP_VOLUME);
 +            if (mShowAppVolume != null) {
@@ -79,8 +79,8 @@ index 613e847..efd7953 100644
                      mVolumePanelOnLeft.isChecked() ? 1 : 0, UserHandle.USER_CURRENT);
              return true;
 +        } else if (preference == mShowAppVolume) {
-+            LineageSettings.System.putIntForUser(getActivity().getContentResolver(),
-+                    LineageSettings.System.SHOW_APP_VOLUME,
++            LineageSettings.Secure.putIntForUser(getActivity().getContentResolver(),
++                    LineageSettings.Secure.SHOW_APP_VOLUME,
 +                    mShowAppVolume.isChecked() ? 1 : 0, UserHandle.USER_CURRENT);
 +            return true;
          } else if (preference == mDisableNavigationKeys) {
