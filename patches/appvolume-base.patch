@@ -1,0 +1,583 @@
+From 08b122f8b89354a2e82a13d7fd1a0a007014d801 Mon Sep 17 00:00:00 2001
+From: cjybyjk <cjybyjk@zjnu.edu.cn>
+Date: Sat, 5 Sep 2020 08:44:29 +0800
+Subject: [PATCH 1/2] audio: support set volume for app [2/2]
+
+Signed-off-by: cjybyjk <cjybyjk@zjnu.edu.cn>
+Change-Id: If7c467ba8c2332a1fc1efe8068fd4838dcca60f8
+---
+ core/jni/android_media_AudioSystem.cpp     | 117 ++++++++++++++++++++-
+ media/java/android/media/AppTrackData.java |  53 ++++++++++
+ media/java/android/media/AudioManager.java |  27 +++++
+ media/java/android/media/AudioSystem.java  |  15 +++
+ 4 files changed, 211 insertions(+), 1 deletion(-)
+ create mode 100644 media/java/android/media/AppTrackData.java
+
+diff --git a/core/jni/android_media_AudioSystem.cpp b/core/jni/android_media_AudioSystem.cpp
+index 22bb2102a6e..fd10b931c4d 100644
+--- a/core/jni/android_media_AudioSystem.cpp
++++ b/core/jni/android_media_AudioSystem.cpp
+@@ -29,6 +29,7 @@
+ #include <audiomanager/AudioManager.h>
+ #include <media/AudioPolicy.h>
+ #include <media/AudioSystem.h>
++#include <media/AppTrackData.h>
+ #include <media/MicrophoneInfo.h>
+ #include <nativehelper/ScopedLocalRef.h>
+ #include <system/audio.h>
+@@ -172,6 +173,10 @@ static struct {
+     jmethodID postRecordConfigEventFromNative;
+ } gAudioPolicyEventHandlerMethods;
+ 
++
++static jclass gAppTrackDataClass;
++static jmethodID gAppTrackDataCstor;
++
+ //
+ // JNI Initialization for OpenSLES routing
+ //
+@@ -763,6 +768,105 @@ android_media_AudioSystem_getMasterBalance(JNIEnv *env, jobject thiz)
+     return balance;
+ }
+ 
++
++static jint
++android_media_AudioSystem_setAppVolume(JNIEnv *env, jobject thiz, jstring packageName, jfloat value)
++{
++    const jchar* c_packageName = env->GetStringCritical(packageName, 0);
++    String8 package8 = String8(reinterpret_cast<const char16_t*>(c_packageName), env->GetStringLength(packageName));
++    env->ReleaseStringCritical(packageName, c_packageName);
++    return (jint) check_AudioSystem_Command(AudioSystem::setAppVolume(package8, value));
++}
++
++static jint
++android_media_AudioSystem_setAppMute(JNIEnv *env, jobject thiz, jstring packageName, jboolean mute)
++{
++    const jchar* c_packageName = env->GetStringCritical(packageName, 0);
++    String8 package8 = String8(reinterpret_cast<const char16_t*>(c_packageName), env->GetStringLength(packageName));
++    env->ReleaseStringCritical(packageName, c_packageName);
++    return (jint) check_AudioSystem_Command(AudioSystem::setAppMute(package8, mute));
++}
++
++jint convertAppTrackDataFromNative(JNIEnv *env, jobject *jAppTrackData, const AppTrackData *AppTrackData)
++{
++    jint jStatus = (jint)AUDIO_JAVA_SUCCESS;
++    jstring jPackageName;
++    jfloat jVolume;
++    jboolean jMute;
++    jboolean jActive;
++
++    if (AppTrackData == NULL || jAppTrackData == NULL) {
++        jStatus = (jint)AUDIO_JAVA_ERROR;
++        goto exit;
++    }
++
++    jPackageName = env->NewStringUTF((*AppTrackData).packageName);
++    jVolume = (*AppTrackData).volume;
++    jMute = (*AppTrackData).muted;
++    jActive = (*AppTrackData).active;
++
++    *jAppTrackData = env->NewObject(gAppTrackDataClass, gAppTrackDataCstor,
++                                jPackageName, jMute, jVolume, jActive);
++                                
++    env->DeleteLocalRef(jPackageName);
++exit:
++    return jStatus;
++}
++
++static jint
++android_media_AudioSystem_listAppTrackDatas(JNIEnv *env, jobject clazz, jobject jVolumes)
++{
++    ALOGV("listAppTrackDatas");
++
++    if (jVolumes == NULL) {
++        ALOGE("listAppTrackDatas NULL AppTrackData ArrayList");
++        return (jint)AUDIO_JAVA_BAD_VALUE;
++    }
++    if (!env->IsInstanceOf(jVolumes, gArrayListClass)) {
++        ALOGE("listAppTrackDatas not an arraylist");
++        return (jint)AUDIO_JAVA_BAD_VALUE;
++    }
++
++    status_t status;
++    unsigned int numVolumes;
++    AppTrackData *nVolumes = NULL;
++    jint jStatus = (jint)AUDIO_JAVA_SUCCESS;
++
++    numVolumes = 0;
++    status = AudioSystem::listAppTrackDatas(&numVolumes, NULL);
++    if (status != NO_ERROR) {
++        ALOGE("AudioSystem::listAppTrackDatas error %d", status);
++        jStatus = nativeToJavaStatus(status);
++        goto exit;
++    }
++    if (numVolumes == 0) {
++        goto exit;
++    }
++    nVolumes = (AppTrackData *)realloc(nVolumes, numVolumes * sizeof(AppTrackData));
++
++    status = AudioSystem::listAppTrackDatas(&numVolumes, nVolumes);
++    jStatus = nativeToJavaStatus(status);
++    if (jStatus != AUDIO_JAVA_SUCCESS) {
++        goto exit;
++    }
++
++    for (size_t i = 0; i < numVolumes; i++) {
++        jobject jAppTrackData = NULL;
++        jStatus = convertAppTrackDataFromNative(env, &jAppTrackData, &nVolumes[i]);
++        if (jStatus != AUDIO_JAVA_SUCCESS) {
++            goto exit;
++        }
++        env->CallBooleanMethod(jVolumes, gArrayListMethods.add, jAppTrackData);
++        if (jAppTrackData != NULL) {
++            env->DeleteLocalRef(jAppTrackData);
++        }
++    }
++
++exit:
++    free(nVolumes);
++    return jStatus;
++}
++
+ static jint
+ android_media_AudioSystem_getDevicesForStream(JNIEnv *env, jobject thiz, jint stream)
+ {
+@@ -2561,7 +2665,13 @@ static const JNINativeMethod gMethods[] =
+           (void *)android_media_AudioSystem_setUserIdDeviceAffinities},
+          {"removeUserIdDeviceAffinities", "(I)I",
+           (void *)android_media_AudioSystem_removeUserIdDeviceAffinities},
+-         {"setCurrentImeUid", "(I)I", (void *)android_media_AudioSystem_setCurrentImeUid}};
++         {"setCurrentImeUid", "(I)I", (void *)android_media_AudioSystem_setCurrentImeUid},
++         {"setAppVolume", "(Ljava/lang/String;F)I",
++          (void *)android_media_AudioSystem_setAppVolume},
++         {"setAppMute", "(Ljava/lang/String;Z)I",
++          (void *)android_media_AudioSystem_setAppMute},
++         {"listAppTrackDatas", "(Ljava/util/ArrayList;)I",
++          (void *)android_media_AudioSystem_listAppTrackDatas}};
+ 
+ static const JNINativeMethod gEventHandlerMethods[] = {
+     {"native_setup",
+@@ -2653,6 +2763,11 @@ int register_android_media_AudioSystem(JNIEnv *env)
+     gAudioPortFields.mAddress = GetFieldIDOrDie(env, audioDevicePortClass, "mAddress",
+             "Ljava/lang/String;");
+ 
++    jclass AppTrackDataClass = FindClassOrDie(env, "android/media/AppTrackData");
++    gAppTrackDataClass = MakeGlobalRefOrDie(env, AppTrackDataClass);
++    gAppTrackDataCstor = GetMethodIDOrDie(env, AppTrackDataClass, "<init>",
++            "(Ljava/lang/String;ZFZ)V");
++
+     jclass audioMixPortClass = FindClassOrDie(env, "android/media/AudioMixPort");
+     gAudioMixPortClass = MakeGlobalRefOrDie(env, audioMixPortClass);
+     gAudioMixPortCstor = GetMethodIDOrDie(env, audioMixPortClass, "<init>",
+diff --git a/media/java/android/media/AppTrackData.java b/media/java/android/media/AppTrackData.java
+new file mode 100644
+index 00000000000..18c9279b2f9
+--- /dev/null
++++ b/media/java/android/media/AppTrackData.java
+@@ -0,0 +1,53 @@
++/*
++ * Copyright (C) 2020 The exTHmUI Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package android.media;
++
++import android.annotation.NonNull;
++
++/**
++ * @hide
++ */
++public class AppTrackData {
++    private final String mPackageName;
++    private final float mVolume;
++    private final boolean mMute;
++    private final boolean mActive;
++
++    AppTrackData(String packageName, boolean mute, float volume, boolean active) {
++        mPackageName = packageName;
++        mMute = mute;
++        mVolume = volume;
++        mActive = active;
++    }
++
++    @NonNull
++    public String getPackageName() {
++        return mPackageName;
++    }
++
++    public float getVolume() {
++        return mVolume;
++    }
++
++    public boolean isMuted() {
++        return mMute;
++    }
++
++    public boolean isActive() {
++        return mActive;
++    }
++}
+diff --git a/media/java/android/media/AudioManager.java b/media/java/android/media/AudioManager.java
+index 70e0409be58..5783c53d23d 100755
+--- a/media/java/android/media/AudioManager.java
++++ b/media/java/android/media/AudioManager.java
+@@ -927,6 +927,33 @@ public class AudioManager {
+         }
+     }
+ 
++
++    /** @hide */
++    @UnsupportedAppUsage
++    @RequiresPermission(android.Manifest.permission.MODIFY_AUDIO_ROUTING)
++    public int setAppVolume(String packageName, float volume) {
++        return AudioSystem.setAppVolume(packageName, volume);
++    }
++
++    /** @hide */
++    @UnsupportedAppUsage
++    @RequiresPermission(android.Manifest.permission.MODIFY_AUDIO_ROUTING)
++    public int setAppMute(String packageName, boolean mute) {
++        return AudioSystem.setAppMute(packageName, mute);
++    }
++
++    /** @hide */
++    @UnsupportedAppUsage
++    @RequiresPermission(android.Manifest.permission.MODIFY_AUDIO_ROUTING)
++    public ArrayList<AppTrackData> listAppTrackDatas() {
++        ArrayList<AppTrackData> volumes = new ArrayList<AppTrackData>();
++        int status = AudioSystem.listAppTrackDatas(volumes);
++        if (status != AudioManager.SUCCESS) {
++            return new ArrayList<AppTrackData>();
++        }
++        return volumes;
++    }
++
+     /**
+      * Returns the current ringtone mode.
+      *
+diff --git a/media/java/android/media/AudioSystem.java b/media/java/android/media/AudioSystem.java
+index 842ab7c8d15..48036c9704b 100644
+--- a/media/java/android/media/AudioSystem.java
++++ b/media/java/android/media/AudioSystem.java
+@@ -1739,6 +1739,21 @@ public class AudioSystem
+     public static native int getPreferredDeviceForStrategy(int strategy,
+                                                            AudioDeviceAttributes[] device);
+ 
++    /**
++     * @hide
++     */
++    public static native int setAppVolume(@NonNull String packageName, float volume);
++
++    /**
++     * @hide
++     */
++    public static native int setAppMute(@NonNull String packageName, boolean mute);
++
++    /**
++     * @hide
++     */
++    public static native int listAppTrackDatas(ArrayList<AppTrackData> volumes);
++
+     // Items shared with audio service
+ 
+     /**
+-- 
+2.54.0
+
+
+From 37e2787723540e2fbce74a66b7da4490623e7bcc Mon Sep 17 00:00:00 2001
+From: cjybyjk <cjybyjk@zjnu.edu.cn>
+Date: Sat, 5 Sep 2020 17:17:04 +0800
+Subject: [PATCH 2/2] SystemUI: add show app volume toggle
+
+Change-Id: I9832574c319065c6d788976ad9b9129e0b6289c3
+---
+ .../SystemUI/res/layout/volume_dialog_row.xml |  13 +++
+ packages/SystemUI/res/values/dimens.xml       |   2 +
+ .../systemui/volume/VolumeDialogImpl.java     | 107 +++++++++++++++++-
+ 3 files changed, 120 insertions(+), 2 deletions(-)
+
+diff --git a/packages/SystemUI/res/layout/volume_dialog_row.xml b/packages/SystemUI/res/layout/volume_dialog_row.xml
+index 85d8decb08c..388a8622b4c 100644
+--- a/packages/SystemUI/res/layout/volume_dialog_row.xml
++++ b/packages/SystemUI/res/layout/volume_dialog_row.xml
+@@ -80,12 +80,25 @@
+         <com.android.keyguard.AlphaOptimizedImageButton
+             android:id="@+id/volume_row_icon"
+             style="@style/VolumeButtons"
++            android:visibility="gone"
+             android:layout_width="@dimen/volume_dialog_tap_target_size"
+             android:layout_height="@dimen/volume_dialog_tap_target_size"
+             android:background="@drawable/ripple_drawable_20dp"
+             android:layout_marginBottom="@dimen/volume_dialog_row_margin_bottom"
+             android:tint="@color/accent_tint_color_selector"
+             android:soundEffectsEnabled="false" />
++
++        <com.android.keyguard.AlphaOptimizedImageButton
++            android:id="@+id/volume_row_app_icon"
++            style="@style/VolumeButtons"
++            android:visibility="gone"
++            android:layout_width="@dimen/volume_dialog_tap_target_size"
++            android:layout_height="@dimen/volume_dialog_tap_target_size"
++            android:background="@drawable/ripple_drawable_20dp"
++            android:layout_marginBottom="@dimen/volume_dialog_row_margin_bottom"
++            android:padding="@dimen/volume_row_app_icon_padding"
++            android:soundEffectsEnabled="false"
++            android:scaleType="centerInside" />
+     </LinearLayout>
+ 
+     <include layout="@layout/volume_dnd_icon"/>
+diff --git a/packages/SystemUI/res/values/dimens.xml b/packages/SystemUI/res/values/dimens.xml
+index c8497d85a3e..206e763bf1e 100644
+--- a/packages/SystemUI/res/values/dimens.xml
++++ b/packages/SystemUI/res/values/dimens.xml
+@@ -472,6 +472,8 @@
+ 
+     <dimen name="volume_tool_tip_arrow_corner_radius">2dp</dimen>
+ 
++    <dimen name="volume_row_app_icon_padding">8dp</dimen>
++
+     <!-- Gravity for the notification panel -->
+     <integer name="notification_panel_layout_gravity">0x31</integer><!-- center_horizontal|top -->
+ 
+diff --git a/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java b/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
+index 7dda017ccf0..15c4b0f771e 100644
+--- a/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
+@@ -55,11 +55,16 @@ import android.content.res.Configuration;
+ import android.content.res.Resources;
+ import android.content.res.TypedArray;
+ import android.graphics.Color;
++import android.graphics.ColorFilter;
+ import android.graphics.PixelFormat;
++import android.graphics.ColorMatrix;
++import android.graphics.ColorMatrixColorFilter;
+ import android.graphics.Region;
+ import android.graphics.drawable.ColorDrawable;
++import android.graphics.drawable.Drawable;
+ import android.media.AudioManager;
+ import android.media.AudioSystem;
++import android.media.AppTrackData;
+ import android.os.Debug;
+ import android.os.Handler;
+ import android.os.Looper;
+@@ -138,6 +143,9 @@ public class VolumeDialogImpl implements VolumeDialog,
+     private static final long USER_ATTEMPT_GRACE_PERIOD = 1000;
+     private static final int UPDATE_ANIMATION_DURATION = 80;
+ 
++    public static final String SHOW_APP_VOLUME =
++            "lineagesystem:" + LineageSettings.System.SHOW_APP_VOLUME;
++
+     static final int DIALOG_TIMEOUT_MILLIS = 3000;
+     static final int DIALOG_SAFETYWARNING_TIMEOUT_MILLIS = 5000;
+     static final int DIALOG_ODI_CAPTIONS_TOOLTIP_TIMEOUT_MILLIS = 5000;
+@@ -166,6 +174,7 @@ public class VolumeDialogImpl implements VolumeDialog,
+     private ExpandableIndicator mExpandRows;
+     private FrameLayout mZenIcon;
+     private final List<VolumeRow> mRows = new ArrayList<>();
++    private final List<VolumeRow> mAppRows = new ArrayList<>();
+     private ConfigurableTexts mConfigurableTexts;
+     private final SparseBooleanArray mDynamic = new SparseBooleanArray();
+     private final KeyguardManager mKeyguard;
+@@ -174,6 +183,8 @@ public class VolumeDialogImpl implements VolumeDialog,
+     private final Object mSafetyWarningLock = new Object();
+     private final Accessibility mAccessibility = new Accessibility();
+ 
++    private final ColorFilter mAppIconMuteColorFilter;
++
+     private boolean mShowing;
+     private boolean mShowA11yStream;
+ 
+@@ -194,6 +205,8 @@ public class VolumeDialogImpl implements VolumeDialog,
+     private View mODICaptionsTooltipView = null;
+     private TunerService mTunerService;
+ 
++    private boolean mShowAppVolume;
++
+     // Volume panel placement left or right
+     private boolean mVolumePanelOnLeft;
+ 
+@@ -213,9 +226,14 @@ public class VolumeDialogImpl implements VolumeDialog,
+                 Prefs.getBoolean(context, Prefs.Key.HAS_SEEN_ODI_CAPTIONS_TOOLTIP, false);
+         mTunerService = Dependency.get(TunerService.class);
+ 
++        Dependency.get(TunerService.class).addTunable(mTunable, SHOW_APP_VOLUME);
++
+         if (!mShowActiveStreamOnly) {
+             mTunerService.addTunable(mTunable, VOLUME_PANEL_ON_LEFT);
+         }
++        ColorMatrix colorMatrix = new ColorMatrix();
++        colorMatrix.setSaturation(0);
++        mAppIconMuteColorFilter = new ColorMatrixColorFilter(colorMatrix);
+     }
+ 
+     @Override
+@@ -419,6 +437,15 @@ public class VolumeDialogImpl implements VolumeDialog,
+                         mControllerCallbackH.onConfigurationChanged();
+                     });
+                 }
++            } else if (key.equals(SHOW_APP_VOLUME)) {
++                final boolean showAppVolume = TunerService.parseIntegerSwitch(newValue, false);
++                if (mShowAppVolume != showAppVolume) {
++                    mShowAppVolume = showAppVolume;
++                    mHandler.post(() -> {
++                        // Trigger panel rebuild on next show
++                        mConfigChanged = true;
++                    });
++                }
+             }
+         }
+     };
+@@ -469,6 +496,51 @@ public class VolumeDialogImpl implements VolumeDialog,
+         mRows.add(row);
+     }
+ 
++    private void addAppRow(AppTrackData data) {
++        VolumeRow row = new VolumeRow();
++        initAppRow(row, data);
++        mDialogRowsView.addView(row.view);
++        mAppRows.add(row);
++    }
++
++    @SuppressLint("InflateParams")
++    private void initAppRow(final VolumeRow row, final AppTrackData data) {
++        row.view = LayoutInflater.from(mContext).inflate(R.layout.volume_dialog_row, null);
++
++        row.packageName = data.getPackageName();
++        row.isAppVolumeRow = true;
++
++        row.view.setTag(row);
++        row.slider = row.view.findViewById(R.id.volume_row_slider);
++        row.slider.setOnSeekBarChangeListener(new VolumeSeekBarChangeListener(row));
++
++        row.appMuted = data.isMuted();
++        row.slider.setProgress((int) (data.getVolume() * 100));
++
++        row.dndIcon = row.view.findViewById(R.id.dnd_icon);
++        row.dndIcon.setVisibility(View.GONE);
++
++        row.icon = row.view.findViewById(R.id.volume_row_app_icon);
++        row.icon.setVisibility(View.VISIBLE);
++        PackageManager pm = mContext.getPackageManager();
++        try {
++            row.icon.setImageDrawable(pm.getApplicationIcon(row.packageName));
++        } catch (PackageManager.NameNotFoundException e) {
++            row.icon.setImageDrawable(pm.getDefaultActivityIcon());
++            Log.e(TAG, "Failed to get icon of " + row.packageName, e);
++        }
++
++        row.icon.setColorFilter(row.appMuted ? mAppIconMuteColorFilter : null);
++        
++        row.icon.setOnClickListener(v -> {
++                rescheduleTimeoutH();
++                AudioManager audioManager = mController.getAudioManager();
++                row.appMuted = !row.appMuted;
++                audioManager.setAppMute(row.packageName, row.appMuted);
++                row.icon.setColorFilter(row.appMuted ? mAppIconMuteColorFilter : null);
++        });
++    }
++
+     private void addExistingRows() {
+         int N = mRows.size();
+         for (int i = 0; i < N; i++) {
+@@ -556,6 +628,7 @@ public class VolumeDialogImpl implements VolumeDialog,
+ 
+         row.icon = row.view.findViewById(R.id.volume_row_icon);
+         row.icon.setImageResource(iconRes);
++        row.icon.setVisibility(View.VISIBLE);
+         if (row.stream != AudioSystem.STREAM_ACCESSIBILITY) {
+             row.icon.setOnClickListener(v -> {
+                 Events.writeEvent(Events.EVENT_ICON_CLICK, row.stream, row.iconState);
+@@ -604,6 +677,21 @@ public class VolumeDialogImpl implements VolumeDialog,
+         if (!isNotificationVolumeLinked()) {
+             setVisOrGone(AudioManager.STREAM_NOTIFICATION, expand);
+         }
++        updateAppRows(expand);
++    }
++
++    private void updateAppRows(boolean expand) {
++        for (int i = mAppRows.size() - 1; i >= 0; i--) {
++            final VolumeRow row = mAppRows.get(i);
++            removeAppRow(row);
++        }
++        if (!mShowAppVolume || !expand) return;
++        List<AppTrackData> trackDatas = mController.getAudioManager().listAppTrackDatas();
++        for (AppTrackData data : trackDatas) {
++            if (data.isActive()) {
++                addAppRow(data);
++            }
++        }
+     }
+ 
+     private void animateExpandedRowsChange(boolean expand) {
+@@ -1199,6 +1287,11 @@ public class VolumeDialogImpl implements VolumeDialog,
+         mDialogRowsView.removeView(volumeRow.view);
+     }
+ 
++    private void removeAppRow(VolumeRow volumeRow) {
++        mAppRows.remove(volumeRow);
++        mDialogRowsView.removeView(volumeRow.view);
++    }
++
+     protected void onStateChangedH(State state) {
+         if (D.BUG) Log.d(TAG, "onStateChangedH() state: " + state.toString());
+         if (mShowing && mState != null && state != null
+@@ -1659,10 +1752,14 @@ public class VolumeDialogImpl implements VolumeDialog,
+         @Override
+         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+             rescheduleTimeoutH();
+-            if (mRow.ss == null) return;
+             if (D.BUG) Log.d(TAG, AudioSystem.streamToString(mRow.stream)
+                     + " onProgressChanged " + progress + " fromUser=" + fromUser);
+             if (!fromUser) return;
++            if (mRow.isAppVolumeRow) {
++                mController.getAudioManager().setAppVolume(mRow.packageName, progress * 0.01f);
++                return;
++            }
++            if (mRow.ss == null) return;
+             if (mRow.ss.levelMin > 0) {
+                 final int minProgress = mRow.ss.levelMin * 100;
+                 if (progress < minProgress) {
+@@ -1685,15 +1782,17 @@ public class VolumeDialogImpl implements VolumeDialog,
+ 
+         @Override
+         public void onStartTrackingTouch(SeekBar seekBar) {
++            mRow.tracking = true;
++            if (mRow.isAppVolumeRow) return;
+             if (D.BUG) Log.d(TAG, "onStartTrackingTouch"+ " " + mRow.stream);
+             mController.setActiveStream(mRow.stream);
+-            mRow.tracking = true;
+         }
+ 
+         @Override
+         public void onStopTrackingTouch(SeekBar seekBar) {
+             if (D.BUG) Log.d(TAG, "onStopTrackingTouch"+ " " + mRow.stream);
+             mRow.tracking = false;
++            if (mRow.isAppVolumeRow) return;
+             mRow.userAttempt = SystemClock.uptimeMillis();
+             final int userLevel = getImpliedLevel(seekBar, seekBar.getProgress());
+             Events.writeEvent(Events.EVENT_TOUCH_LEVEL_DONE, mRow.stream, userLevel);
+@@ -1746,5 +1845,9 @@ public class VolumeDialogImpl implements VolumeDialog,
+         private int animTargetProgress;
+         private int lastAudibleLevel = 2;
+         private FrameLayout dndIcon;
++        /* for change app's volume */
++        private String packageName;
++        private boolean isAppVolumeRow = false;
++        private boolean appMuted;
+     }
+ }
+-- 
+2.54.0
+

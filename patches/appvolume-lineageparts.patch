@@ -1,0 +1,99 @@
+From 65077a6e45b1e6da3f395c3f2d944c250c714817 Mon Sep 17 00:00:00 2001
+From: bimuafaq <133272416+bimuafaq@users.noreply.github.com>
+Date: Fri, 10 Jul 2026 09:22:42 +0000
+Subject: [PATCH] LineageParts: add show app volume toggle
+
+Change-Id: Iac44533935d7bd65d68621a83c992e3578594b80
+---
+ res/values/strings.xml                           |  2 ++
+ res/xml/button_settings.xml                      |  5 +++++
+ .../lineageparts/input/ButtonSettings.java       | 16 ++++++++++++++++
+ 3 files changed, 23 insertions(+)
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index f2da767..cd0300d 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -208,6 +208,8 @@
+     <string name="swap_volume_buttons_summary">Swap volume buttons when the screen is rotated</string>
+     <string name="volume_panel_on_left_title">Show panel on left</string>
+     <string name="volume_panel_on_left_summary">Display volume panel on the left side of the screen</string>
++    <string name="show_app_volume_title">Show app volume</string>
++    <string name="show_app_volume_summary">Show per-app volume rows in volume panel</string>
+     <string name="button_wake_title">Wake device</string>
+     <string name="volume_answer_call_title">Answer call</string>
+     <string name="volume_answer_call_summary">Answer incoming calls by pressing the volume buttons</string>
+diff --git a/res/xml/button_settings.xml b/res/xml/button_settings.xml
+index 5234a96..6503105 100644
+--- a/res/xml/button_settings.xml
++++ b/res/xml/button_settings.xml
+@@ -322,6 +322,11 @@
+             android:key="volume_panel_on_left"
+             android:title="@string/volume_panel_on_left_title"
+             android:summary="@string/volume_panel_on_left_summary" />
++
++        <SwitchPreference
++            android:key="show_app_volume"
++            android:title="@string/show_app_volume_title"
++            android:summary="@string/show_app_volume_summary" />
+     </PreferenceCategory>
+ 
+     <PreferenceCategory
+diff --git a/src/org/lineageos/lineageparts/input/ButtonSettings.java b/src/org/lineageos/lineageparts/input/ButtonSettings.java
+index 613e847..efd7953 100644
+--- a/src/org/lineageos/lineageparts/input/ButtonSettings.java
++++ b/src/org/lineageos/lineageparts/input/ButtonSettings.java
+@@ -86,6 +86,7 @@ public class ButtonSettings extends SettingsPreferenceFragment
+     private static final String KEY_VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
+     private static final String KEY_SWAP_VOLUME_BUTTONS = "swap_volume_buttons";
+     private static final String KEY_VOLUME_PANEL_ON_LEFT = "volume_panel_on_left";
++    private static final String KEY_SHOW_APP_VOLUME = "show_app_volume";
+     private static final String KEY_VOLUME_WAKE_SCREEN = "volume_wake_screen";
+     private static final String KEY_VOLUME_ANSWER_CALL = "volume_answer_call";
+     private static final String KEY_DISABLE_NAV_KEYS = "disable_nav_keys";
+@@ -136,6 +137,7 @@ public class ButtonSettings extends SettingsPreferenceFragment
+     private SwitchPreference mVolumeMusicControls;
+     private SwitchPreference mSwapVolumeButtons;
+     private SwitchPreference mVolumePanelOnLeft;
++    private SwitchPreference mShowAppVolume;
+     private SwitchPreference mDisableNavigationKeys;
+     private SwitchPreference mNavigationArrowKeys;
+     private ListPreference mNavigationBackLongPressAction;
+@@ -426,6 +428,14 @@ public class ButtonSettings extends SettingsPreferenceFragment
+             if (mVolumePanelOnLeft != null) {
+                 mVolumePanelOnLeft.setChecked(volumePanelOnLeft);
+             }
++
++            final boolean showAppVolume = LineageSettings.System.getIntForUser(
++                    getContentResolver(), LineageSettings.System.SHOW_APP_VOLUME, 0,
++                    UserHandle.USER_CURRENT) != 0;
++            mShowAppVolume = prefScreen.findPreference(KEY_SHOW_APP_VOLUME);
++            if (mShowAppVolume != null) {
++                mShowAppVolume.setChecked(showAppVolume);
++            }
+         } else {
+             extrasCategory.removePreference(findPreference(KEY_CLICK_PARTIAL_SCREENSHOT));
+         }
+@@ -817,6 +827,11 @@ public class ButtonSettings extends SettingsPreferenceFragment
+                     LineageSettings.Secure.VOLUME_PANEL_ON_LEFT,
+                     mVolumePanelOnLeft.isChecked() ? 1 : 0, UserHandle.USER_CURRENT);
+             return true;
++        } else if (preference == mShowAppVolume) {
++            LineageSettings.System.putIntForUser(getActivity().getContentResolver(),
++                    LineageSettings.System.SHOW_APP_VOLUME,
++                    mShowAppVolume.isChecked() ? 1 : 0, UserHandle.USER_CURRENT);
++            return true;
+         } else if (preference == mDisableNavigationKeys) {
+             mDisableNavigationKeys.setEnabled(false);
+             mNavigationPreferencesCat.setEnabled(false);
+@@ -929,6 +944,7 @@ public class ButtonSettings extends SettingsPreferenceFragment
+                 result.add(KEY_VOLUME_KEY_CURSOR_CONTROL);
+                 result.add(KEY_VOLUME_MUSIC_CONTROLS);
+                 result.add(KEY_VOLUME_PANEL_ON_LEFT);
++                result.add(KEY_SHOW_APP_VOLUME);
+                 result.add(KEY_VOLUME_WAKE_SCREEN);
+                 result.add(KEY_CLICK_PARTIAL_SCREENSHOT);
+             } else if (!DeviceUtils.canWakeUsingVolumeKeys(context)) {
+-- 
+2.54.0
+

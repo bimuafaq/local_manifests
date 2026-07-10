@@ -28,6 +28,10 @@ system/sepolicy:sepolicy.patch
 frameworks/base:lteca-base.patch
 frameworks/opt/telephony:lteca-telephony.patch
 packages/apps/Settings:lteca-settings.patch
+frameworks/av:appvolume-av.patch
+frameworks/base:appvolume-base.patch
+lineage-sdk:appvolume-sdk.patch
+packages/apps/LineageParts:appvolume-lineageparts.patch
 EOF
 }
 

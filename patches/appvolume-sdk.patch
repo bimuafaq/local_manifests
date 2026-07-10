@@ -1,0 +1,41 @@
+From 4b11d064de359b2994d6ce95dbf9a597654e5eb6 Mon Sep 17 00:00:00 2001
+From: bimuafaq <133272416+bimuafaq@users.noreply.github.com>
+Date: Fri, 10 Jul 2026 09:19:27 +0000
+Subject: [PATCH] sdk: add show app volume toggle
+
+Change-Id: I11181af56032fcd3f562b4d1fbeb8986c0715162
+---
+ sdk/src/java/lineageos/providers/LineageSettings.java | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/sdk/src/java/lineageos/providers/LineageSettings.java b/sdk/src/java/lineageos/providers/LineageSettings.java
+index f0f0fda..7d1c21b 100644
+--- a/sdk/src/java/lineageos/providers/LineageSettings.java
++++ b/sdk/src/java/lineageos/providers/LineageSettings.java
+@@ -3294,6 +3294,15 @@ public final class LineageSettings {
+         public static final Validator VOLUME_PANEL_ON_LEFT_VALIDATOR =
+                 sBooleanValidator;
+ 
++        /**
++         * Whether to show app volume rows in volume panel
++         * 0 = false, 1 = true
++         */
++        public static final String SHOW_APP_VOLUME = "show_app_volume";
++
++        public static final Validator SHOW_APP_VOLUME_VALIDATOR =
++                sBooleanValidator;
++
+         /**
+          * Whether tethering is allowed to use VPN upstreams
+          * 0 = false, 1 = true
+@@ -3418,6 +3427,7 @@ public final class LineageSettings {
+             VALIDATORS.put(TRUST_NOTIFICATIONS, TRUST_NOTIFICATIONS_VALIDATOR);
+             VALIDATORS.put(TRUST_RESTRICT_USB_KEYGUARD, TRUST_RESTRICT_USB_KEYGUARD_VALIDATOR);
+             VALIDATORS.put(TRUST_WARNINGS, TRUST_WARNINGS_VALIDATOR);
++            VALIDATORS.put(SHOW_APP_VOLUME, SHOW_APP_VOLUME_VALIDATOR);
+             VALIDATORS.put(VOLUME_PANEL_ON_LEFT, VOLUME_PANEL_ON_LEFT_VALIDATOR);
+         }
+     }
+-- 
+2.54.0
+
