@@ -1,18 +1,18 @@
-From 122c9396f52ea0b8435d980e92193b22581bd59a Mon Sep 17 00:00:00 2001
+From 97d747eed72ab8553673d52fdf13f5d3cc4d0b00 Mon Sep 17 00:00:00 2001
 From: bimuafaq <133272416+bimuafaq@users.noreply.github.com>
 Date: Fri, 10 Jul 2026 14:12:27 +0000
 Subject: [PATCH] SystemUI: wire up/down buttons for app volume rows
 
 Change-Id: I2c15cb948f1684570ee3bc548f36c31a4ba8cbd4
 ---
- .../systemui/volume/VolumeDialogImpl.java     | 22 +++++++++++++++++++
- 1 file changed, 22 insertions(+)
+ .../systemui/volume/VolumeDialogImpl.java     | 48 +++++++++++++++----
+ 1 file changed, 38 insertions(+), 10 deletions(-)
 
 diff --git a/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java b/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
-index 272fc9f3..48ddcb8b 100644
+index 272fc9f3..62159c87 100644
 --- a/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
 +++ b/packages/SystemUI/src/com/android/systemui/volume/VolumeDialogImpl.java
-@@ -517,6 +517,28 @@ public class VolumeDialogImpl implements VolumeDialog,
+@@ -517,6 +517,30 @@ public class VolumeDialogImpl implements VolumeDialog,
          row.appMuted = data.isMuted();
          row.slider.setProgress((int) (data.getVolume() * 100));
  
@@ -25,6 +25,7 @@ index 272fc9f3..48ddcb8b 100644
 +                row.slider.setProgress(newProgress);
 +                mController.getAudioManager().setAppVolume(row.packageName, newProgress * 0.01f);
 +            });
++            row.upButton.setVisibility(isLandscape() ? GONE : VISIBLE);
 +        }
 +
 +        row.downButton = row.view.findViewById(R.id.volume_row_slider_down);
@@ -36,10 +37,44 @@ index 272fc9f3..48ddcb8b 100644
 +                row.slider.setProgress(newProgress);
 +                mController.getAudioManager().setAppVolume(row.packageName, newProgress * 0.01f);
 +            });
++            row.downButton.setVisibility(isLandscape() ? GONE : VISIBLE);
 +        }
 +
          row.dndIcon = row.view.findViewById(R.id.dnd_icon);
          row.dndIcon.setVisibility(View.GONE);
+ 
+@@ -611,18 +635,22 @@ public class VolumeDialogImpl implements VolumeDialog,
+         row.slider.setOnSeekBarChangeListener(new VolumeSeekBarChangeListener(row));
+ 
+         row.upButton = row.view.findViewById(R.id.volume_row_slider_up);
+-        row.upButton.setOnClickListener(v -> {
+-            rescheduleTimeoutH();
+-            mController.getAudioManager().adjustStreamVolume(row.stream, AudioManager.ADJUST_RAISE, 0);
+-            row.userAttempt = 0;
+-        });
++        if (row.upButton != null) {
++            row.upButton.setOnClickListener(v -> {
++                rescheduleTimeoutH();
++                mController.getAudioManager().adjustStreamVolume(row.stream, AudioManager.ADJUST_RAISE, 0);
++                row.userAttempt = 0;
++            });
++        }
+ 
+         row.downButton = row.view.findViewById(R.id.volume_row_slider_down);
+-        row.downButton.setOnClickListener(v -> {
+-            rescheduleTimeoutH();
+-            mController.getAudioManager().adjustStreamVolume(row.stream, AudioManager.ADJUST_LOWER, 0);
+-            row.userAttempt = 0;
+-        });
++        if (row.downButton != null) {
++            row.downButton.setOnClickListener(v -> {
++                rescheduleTimeoutH();
++                mController.getAudioManager().adjustStreamVolume(row.stream, AudioManager.ADJUST_LOWER, 0);
++                row.userAttempt = 0;
++            });
++        }
+ 
+         row.anim = null;
  
 -- 
 2.54.0
