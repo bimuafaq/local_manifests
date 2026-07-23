@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+
+  <project path="device/realme/RMX2185" name="bimuafaq/device_realme_RMX2185" remote="github" revision="lineage-19.1" />
+  <project path="vendor/realme/RMX2185" name="bimuafaq/vendor_realme_RMX2185" remote="github" revision="lineage-18.1" />
+  <project path="kernel/realme/RMX2185" name="bimuafaq/android_kernel_realme_mt6765" remote="github" revision="personal" />
+
+  <project path="prebuilts/clang/host/linux-x86/clang-r353983c1" name="rovars/clang" remote="github" revision="main" />
+
+</manifest>
