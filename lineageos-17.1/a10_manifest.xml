@@ -52,7 +52,6 @@
   <remove-project name="LineageOS/android_packages_apps_LineageParts" />
   <project path="packages/apps/LineageParts" name="bimuafaq/android_packages_apps_LineageParts" remote="github" revision="lineage-17.1" />
 
- 
   <remove-project name="LineageOS/android_packages_apps_FMRadio" />
   <project path="packages/apps/FMRadio" name="bimuafaq/android_packages_apps_FMRadio" remote="github" revision="lineage-17.1" />
 
