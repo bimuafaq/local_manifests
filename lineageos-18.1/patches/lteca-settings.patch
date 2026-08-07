@@ -1,4 +1,4 @@
-From ec0d3bee0eaf00858912291f45474393b947ec3c Mon Sep 17 00:00:00 2001
+From 7b921cae9820dad24b709a1b561875343ff194dd Mon Sep 17 00:00:00 2001
 From: bimuafaq <133272416+bimuafaq@users.noreply.github.com>
 Date: Mon, 29 Jun 2026 01:31:04 +0000
 Subject: [PATCH] Introduce Force LTE_CA override on per subscription basis
@@ -13,26 +13,24 @@ Co-authored-by: Arindam Bhattacharjee <abhattacharjee717@gmail.com>
 Change-Id: Iea03b567de6a3f1250b74c5173905eebbd6d784a
 Signed-off-by: bimuafaq <bimuafaq@duck.com>
 ---
- res/values/custom_strings.xml                 |  4 ++++
+ res/values/cm_strings.xml                     |  4 ++++
  res/xml/mobile_network_settings.xml           |  6 ++++++
  .../telephony/MobileNetworkSettings.java      | 19 +++++++++++++++++++
  3 files changed, 29 insertions(+)
 
-diff --git a/res/values/custom_strings.xml b/res/values/custom_strings.xml
-index 22ee0ae..017688a 100644
---- a/res/values/custom_strings.xml
-+++ b/res/values/custom_strings.xml
-@@ -19,6 +19,10 @@
-     <string name="category_screen">Screen</string>
-     <string name="category_lock_interaction">Lock Screen &amp; Interaction</string>
- 
+diff --git a/res/values/cm_strings.xml b/res/values/cm_strings.xml
+index 6331be8..56f38d8 100644
+--- a/res/values/cm_strings.xml
++++ b/res/values/cm_strings.xml
+@@ -208,4 +208,8 @@
+     <string name="custom_seekbar_default_value">Default</string>
+     <string name="custom_seekbar_default_value_to_set">Default value: <xliff:g id="v">%s</xliff:g>\nLong press to set</string>
+     <string name="custom_seekbar_default_value_is_set">Default value is set</string>
++
 +    <!-- Force LTE_CA -->
 +    <string name="force_lte_ca_title">Carrier Aggregation</string>
 +    <string name="force_lte_ca_summary">Enhances LTE bandwidth by aggregating supported bands.</string>
-+
-     <string name="gms_blocker_title">Bypass GMS Warnings</string>
-     <string name="gms_blocker_summary">Bypasses the \"This app won\'t run unless you update...\" dialogs</string>
- 
+ </resources>
 diff --git a/res/xml/mobile_network_settings.xml b/res/xml/mobile_network_settings.xml
 index 75e1596..041182d 100644
 --- a/res/xml/mobile_network_settings.xml
