@@ -21,7 +21,6 @@ frameworks/base:constify_frameworks_base.patch
 libcore:constify_libcore.patch
 packages/apps/Bluetooth:constify_packages_apps_Bluetooth.patch
 packages/apps/Nfc:constify_packages_apps_Nfc.patch
-build/make:build.patch
 system/core:core.patch
 external/selinux:selinux.patch
 system/sepolicy:sepolicy.patch
