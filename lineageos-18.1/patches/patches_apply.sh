@@ -25,9 +25,6 @@ build/make:build.patch
 system/core:core.patch
 external/selinux:selinux.patch
 system/sepolicy:sepolicy.patch
-frameworks/base:lteca-base.patch
-frameworks/opt/telephony:lteca-telephony.patch
-packages/apps/Settings:lteca-settings.patch
 EOF
 }
 
