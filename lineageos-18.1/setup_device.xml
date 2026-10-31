@@ -63,6 +63,6 @@
   <project path="vendor/lineage" name="bimuafaq/android_vendor_lineage" remote="github" revision="lineage-18.1" />
 
   <remove-project name="LineageOS/android_vendor_apn" />
-  <project path="vendor/lineage" name="bimuafaq/android_vendor_apn" remote="github" revision="main" />
+  <project path="vendor/apn" name="bimuafaq/android_vendor_apn" remote="github" revision="main" />
   
 </manifest>
